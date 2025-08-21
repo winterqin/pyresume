@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 from backend.config import settings
-from backend.routers import application_router, platform_router
+from backend.routers import get_application_router
 
 app = FastAPI(
     title="求职管理系统API",
@@ -10,8 +10,9 @@ app = FastAPI(
 )
 
 # 包含路由
-app.include_router(application_router)
-app.include_router(platform_router)
+prefix = "/api/v1"
+app.include_router(get_application_router(), prefix=prefix, tags=["求职管理"])
+# app.include_router(platform_router.router, prefix=prefix,  tags=["公司管理"])
 
 
 @app.get("/")

@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from ..database import Base
 
-
 class JobPlatform(Base):
     """求职平台信息表"""
     __tablename__ = 'job_platforms'
