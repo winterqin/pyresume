@@ -8,8 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Building, Plus, Edit, Trash2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
-import { api } from '@/config/api';
+import { api, buildApiUrl } from '@/config/api';
 import { API_CONFIG } from '../config/constants';
+import tokenService from '../services/tokenService';
+import { useNavigate } from 'react-router-dom';
 
 function CompanyList() {
   const [companies, setCompanies] = useState([]);
@@ -28,11 +30,44 @@ function CompanyList() {
     upass: ''
   });
 
+  const navigate = useNavigate();
   const ITEMS_PER_PAGE = 10;
 
+  // 页面加载时检查用户登录状态并获取数据
+  useEffect(() => {
+    const initializePage = async () => {
+      try {
+        // 检查用户是否已登录
+        const currentUser = tokenService.getCurrentUser();
+        if (!currentUser) {
+          console.log('用户未登录，重定向到登录页面');
+          navigate('/login');
+          return;
+        }
+
+        console.log('当前用户:', currentUser);
+        
+        // 获取初始数据
+        await fetchCompanies();
+      } catch (error) {
+        console.error('初始化页面失败:', error);
+        if (error.response?.status === 401) {
+          console.log('Token 已过期，重定向到登录页面');
+          tokenService.clearTokens();
+          navigate('/login');
+        }
+      }
+    };
+
+    initializePage();
+  }, [navigate]);
+
+  // 当页码或搜索词变化时重新获取数据
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchCompanies();
+      if (tokenService.getCurrentUser()) {
+        fetchCompanies();
+      }
     }, 800); // 500ms的防抖延迟
 
     return () => {
@@ -52,12 +87,27 @@ function CompanyList() {
         params.search = searchTerm;
       }
 
-      const result = await api.get(buildApiUrl(API_CONFIG.COMPANY.LIST), params);
-      setCompanies(result.data || []);
-      setTotalPages(result.total_pages || 1);
+      console.log('获取公司列表，参数:', params);
+      const response = await api.get(buildApiUrl(API_CONFIG.COMPANY.LIST), params);
+      console.log('公司列表 API 响应:', response.data);
+      
+      // 修正数据处理逻辑
+      const responseData = response.data;
+      if (responseData.success) {
+        setCompanies(responseData.data || []);
+        setTotalPages(responseData.total_pages || 1);
+      } else {
+        setCompanies([]);
+        setTotalPages(1);
+      }
     } catch (error) {
       console.error('获取公司列表失败:', error);
-      toast.error('获取公司列表失败');
+      if (error.response?.status === 401) {
+        tokenService.clearTokens();
+        navigate('/login');
+      } else {
+        toast.error('获取公司列表失败');
+      }
     } finally {
       setLoading(false);
     }

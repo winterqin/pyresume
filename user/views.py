@@ -7,7 +7,7 @@ import json
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken  # ✅ 加上 AccessToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from .models import myUser
+from .models import myUser, UserToken
 from .utils import send_email, generate_verification_token, verify_token
 
 
@@ -146,6 +146,17 @@ def login_with_token(request):
         data = json.loads(request.body)
         email = data.get('email')
         token = data.get('token')
+        usertoken = UserToken.objects.filter(token=token).first()
+        user = authenticate(request, email=email)
+        if user is not None:
+            login(request, user)
+            # 生成JWT token
+            tokens = get_tokens_for_user(user)
+            return JsonResponse({
+                'message': '登录成功',
+                'user': {'email': user.email},
+                'tokens': tokens
+            })
 
         if not email or not token:
             return JsonResponse({'error': '邮箱和验证码不能为空'}, status=400)

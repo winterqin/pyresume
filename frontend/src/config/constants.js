@@ -12,17 +12,17 @@ export const API_CONFIG = {
   DASHBOARD: {
     STATS: '/api/dashboard/stats/',
   },
-  COMPANIES: {
+  COMPANY: {
     LIST: '/api/companies/',
     CREATE: '/api/companies/create/',
-    UPDATE: '/api/companies/{id}/update/',
-    DELETE: '/api/companies/{id}/delete/',
+    UPDATE: (id) => `/api/companies/${id}/update/`,
+    DELETE: (id) => `/api/companies/${id}/delete/`,
     OPTIONS: '/api/companies/options/',
   },
-  APPLICATIONS: {
+  APPLICATION: {
     LIST: '/api/applications/',
     CREATE: '/api/applications/create/',
-    UPDATE: '/api/applications/{id}/update/',
-    DELETE: '/api/applications/{id}/delete/',
+    UPDATE: (id) => `/api/applications/${id}/update/`,
+    DELETE: (id) => `/api/applications/${id}/delete/`,
   },
 };

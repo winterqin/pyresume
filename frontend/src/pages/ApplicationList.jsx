@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -19,10 +20,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Building, Plus, Edit, Trash2, Eye, EyeOff,Search } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import Header from '@/components/Header';
-import { api } from '@/config/api';
+import { api, buildApiUrl } from '@/config/api';
 import { API_CONFIG } from '../config/constants';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import tokenService from '../services/tokenService';
+import { useNavigate } from 'react-router-dom';
 
 function ApplicationList() {
   const [applications, setApplications] = useState([]);
@@ -53,21 +56,40 @@ function ApplicationList() {
     upass: ''
   });
 
+  const navigate = useNavigate();
   const ITEMS_PER_PAGE = 10;
 
+  // 页面加载时检查用户登录状态并获取数据
   useEffect(() => {
-    fetchCompanies();
-  }, []);
+    const initializePage = async () => {
+      try {
+        // 检查用户是否已登录
+        const currentUser = tokenService.getCurrentUser();
+        if (!currentUser) {
+          console.log('用户未登录，重定向到登录页面');
+          navigate('/login');
+          return;
+        }
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      fetchApplications();
-    }, 500); // 500ms的防抖延迟
-
-    return () => {
-      clearTimeout(handler);
+        console.log('当前用户:', currentUser);
+        
+        // 获取初始数据
+        await Promise.all([
+          fetchApplications(),
+          fetchCompanies()
+        ]);
+      } catch (error) {
+        console.error('初始化页面失败:', error);
+        if (error.response?.status === 401) {
+          console.log('Token 已过期，重定向到登录页面');
+          tokenService.clearTokens();
+          navigate('/login');
+        }
+      }
     };
-  }, [currentPage, searchTerm]);
+
+    initializePage();
+  }, [navigate]);
 
   useEffect(() => {
     if (companySearchTerm) {
@@ -79,6 +101,19 @@ function ApplicationList() {
       setFilteredCompanies(companies);
     }
   }, [companySearchTerm, companies]);
+
+  // 当页码或搜索词变化时重新获取数据
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (tokenService.getCurrentUser()) {
+        fetchApplications();
+      }
+    }, 500); // 500ms的防抖延迟
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [currentPage, searchTerm]);
 
   const fetchApplications = async () => {
     try {
@@ -92,12 +127,29 @@ function ApplicationList() {
         params.search = searchTerm;
       }
 
-      const result = await api.get(buildApiUrl(API_CONFIG.APPLICATION.LIST), params);
-      setApplications(result.data || []);
-      setTotalPages(result.total_pages || 1);
+      console.log('获取求职记录，参数:', params);
+      const response = await api.get(buildApiUrl(API_CONFIG.APPLICATION.LIST), params);
+      console.log('求职记录 API 响应:', response.data);
+      
+      // 处理嵌套的响应结构
+      const responseData = response.data;
+      console.log(responseData)
+      if (responseData.success) {
+        console.log("responseData success")
+        setApplications(responseData.data || []);
+        setTotalPages(responseData.total_pages || 1);
+      } else {
+        setApplications([]);
+        setTotalPages( 1);
+      }
     } catch (error) {
       console.error('获取求职记录失败:', error);
-      toast.error('获取求职记录失败');
+      if (error.response?.status === 401) {
+        tokenService.clearTokens();
+        navigate('/login');
+      } else {
+        toast.error('获取求职记录失败');
+      }
     } finally {
       setLoading(false);
     }
@@ -105,12 +157,27 @@ function ApplicationList() {
 
   const fetchCompanies = async () => {
     try {
-      const result = await api.get(buildApiUrl(API_CONFIG.COMPANY.OPTIONS));
-      setCompanies(result.data || []);
-      setFilteredCompanies(result.data || []);
+      console.log('获取公司选项列表');
+      const response = await api.get(buildApiUrl(API_CONFIG.COMPANY.OPTIONS));
+      console.log('公司选项 API 响应:', response.data);
+      
+      // 处理嵌套的响应结构
+      const responseData = response.data;
+      if (responseData.success) {
+        setCompanies(responseData.data || []);
+        setFilteredCompanies(responseData.data || []);
+      } else {
+        setCompanies(responseData.data || []);
+        setFilteredCompanies(responseData.data || []);
+      }
     } catch (error) {
       console.error('获取公司列表失败:', error);
-      toast.error('获取公司列表失败');
+      if (error.response?.status === 401) {
+        tokenService.clearTokens();
+        navigate('/login');
+      } else {
+        toast.error('获取公司列表失败');
+      }
     }
   };
 

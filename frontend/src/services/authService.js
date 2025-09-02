@@ -24,7 +24,7 @@ const authService = {
   sendVerificationCode: async (email) => {
     const response = await api.post(API_CONFIG.AUTH.SEND_VERIFICATION_CODE, { 
       email, 
-      code_type: 'register' 
+      token_type: 'register' 
     });
     return response.data;
   },
@@ -33,7 +33,7 @@ const authService = {
   sendVerificationEmail: async (email, type = 'login') => {
     const response = await api.post(API_CONFIG.AUTH.SEND_VERIFICATION_CODE, { 
       email, 
-      code_type: type 
+      token_type: type 
     });
     return response.data;
   },

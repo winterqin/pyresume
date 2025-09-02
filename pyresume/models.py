@@ -12,6 +12,12 @@ class Company(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(MyUser, on_delete=models.SET_NULL, null=True, blank=True)
 
+    # 如果你在创建记录时允许为空，去掉 null=True 的做法
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
+
     def __str__(self):
         return self.company_name or "Company"
 
@@ -27,6 +33,12 @@ class Application(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True)
     user = models.ForeignKey(MyUser, on_delete=models.SET_NULL, null=True, blank=True)
+
+    # 如果你在创建记录时允许为空，去掉 null=True 的做法
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
 
     def __str__(self):
         return f"Application for {self.position} at {self.company.company_name if self.company else 'No Company'}"
