@@ -58,15 +58,53 @@ def email_login(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+# @csrf_exempt
+# @require_http_methods(['POST'])
+# def register(request):
+#     """
+#     用户注册
+#     :param request: email 邮箱地址
+#                     password 密码
+#                     token 验证码
+#     :return:
+#     """
+#     try:
+#         data = json.loads(request.body)
+#         email = data.get('email')
+#         password = data.get('password')
+#         token = data.get('token')
+#
+#         if not email or not password or not token:
+#             return JsonResponse({'error': '邮箱、密码和验证码不能为空'}, status=400)
+#
+#         if not verify_token(email, token, 'register'):
+#             # 验证码验证失败
+#             return JsonResponse({'error': '验证码无效或已过期'}, status=400)
+#
+#         # 检查用户是否已存在
+#         if myUser.objects.filter(email=email).exists():
+#             return JsonResponse({'error': '该邮箱已被注册'}, status=400)
+#
+#         user = myUser.objects.create_user(email=email, password=password)
+#         # 注册成功后自动登录并生成JWT token
+#         login(request, user)
+#         tokens = get_tokens_for_user(user)
+#         return JsonResponse({
+#             'message': '注册成功',
+#             'user': {'email': user.email},
+#             'tokens': tokens
+#         })
+#     except json.JSONDecodeError:
+#         return JsonResponse({'error': '无效的JSON数据'}, status=400)
+#     except Exception as e:
+#         return JsonResponse({'error': str(e)}, status=500)
 @csrf_exempt
 @require_http_methods(['POST'])
 def register(request):
     """
     用户注册
-    :param request: email 邮箱地址
-                    password 密码
-                    token 验证码
-    :return:
+    body: { email, password, token }
+    return: { message, user: { email }, tokens }
     """
     try:
         data = json.loads(request.body)
@@ -77,23 +115,35 @@ def register(request):
         if not email or not password or not token:
             return JsonResponse({'error': '邮箱、密码和验证码不能为空'}, status=400)
 
+        # 验证验证码
         if not verify_token(email, token, 'register'):
-            # 验证码验证失败
             return JsonResponse({'error': '验证码无效或已过期'}, status=400)
 
-        # 检查用户是否已存在
+        # 查重
         if myUser.objects.filter(email=email).exists():
             return JsonResponse({'error': '该邮箱已被注册'}, status=400)
 
+        # 创建用户
         user = myUser.objects.create_user(email=email, password=password)
-        # 注册成功后自动登录并生成JWT token
+
+        # （可选）会话登录
         login(request, user)
+
+        # 生成 JWT
         tokens = get_tokens_for_user(user)
+
+        # （可选）一次性验证码作废
+        try:
+            UserToken.objects.filter(email=email, token=token, scene='register').delete()
+        except Exception:
+            pass
+
         return JsonResponse({
             'message': '注册成功',
             'user': {'email': user.email},
             'tokens': tokens
-        })
+        }, status=201)
+
     except json.JSONDecodeError:
         return JsonResponse({'error': '无效的JSON数据'}, status=400)
     except Exception as e:
@@ -137,49 +187,50 @@ def send_verification_email(request):
 @require_http_methods(['POST'])
 def login_with_token(request):
     """
-    使用验证码登录
-    :param request: email 邮箱地址
-                    token 验证码
-    :return:
+    使用邮箱+验证码登录（免密）
+    body: { email, token }
+    return: { message, user: { email }, tokens }
     """
     try:
         data = json.loads(request.body)
         email = data.get('email')
         token = data.get('token')
-        usertoken = UserToken.objects.filter(token=token).first()
-        user = authenticate(request, email=email)
-        if user is not None:
-            login(request, user)
-            # 生成JWT token
-            tokens = get_tokens_for_user(user)
-            return JsonResponse({
-                'message': '登录成功',
-                'user': {'email': user.email},
-                'tokens': tokens
-            })
 
         if not email or not token:
             return JsonResponse({'error': '邮箱和验证码不能为空'}, status=400)
 
+        # 验证验证码（包含有效期/用途校验）
         if not verify_token(email, token, 'login_with_token'):
             return JsonResponse({'error': '验证码无效或已过期'}, status=400)
 
         try:
             user = myUser.objects.get(email=email)
-            login(request, user)
-            # 生成JWT token
-            tokens = get_tokens_for_user(user)
-            return JsonResponse({
-                'message': '登录成功',
-                'user': {'email': user.email},
-                'tokens': tokens
-            })
         except myUser.DoesNotExist:
             return JsonResponse({'error': '用户不存在'}, status=404)
+
+        # （可选）会话登录
+        login(request, user)
+
+        # 生成 JWT
+        tokens = get_tokens_for_user(user)
+
+        # （可选）一次性验证码作废
+        try:
+            UserToken.objects.filter(email=email, token=token, scene='login_with_token').delete()
+        except Exception:
+            pass
+
+        return JsonResponse({
+            'message': '登录成功',
+            'user': {'email': user.email},
+            'tokens': tokens
+        })
+
     except json.JSONDecodeError:
         return JsonResponse({'error': '无效的JSON数据'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
 
 
 @csrf_exempt
