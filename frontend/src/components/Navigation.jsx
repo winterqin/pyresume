@@ -68,7 +68,7 @@ function Navigation() {
           <div className="flex items-center space-x-4">
             <Link to="/" className="flex items-center space-x-2 text-gray-900 hover:text-gray-700">
               <Home className="h-6 w-6" />
-              <span className="font-semibold text-lg">ResumeGo</span>
+              <span className="font-semibold text-lg">pyresume</span>
             </Link>
             <div className="flex items-center space-x-2 text-gray-500">
               <span>/</span>

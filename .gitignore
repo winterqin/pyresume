@@ -8,3 +8,4 @@ wheels/
 .zip
 # Virtual environments
 .venv
+.env

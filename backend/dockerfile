@@ -1,0 +1,44 @@
+# 使用uv官方Python 3.12镜像
+FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim
+
+# 设置工作目录
+WORKDIR /app
+
+# 设置环境变量
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# 替换为国内Debian源（清华源）
+RUN printf 'Types: deb\nURIs: http://mirrors.tuna.tsinghua.edu.cn/debian\nSuites: trixie trixie-updates trixie-backports\nComponents: main contrib non-free non-free-firmware\n\nTypes: deb\nURIs: http://mirrors.tuna.tsinghua.edu.cn/debian-security\nSuites: trixie-security\nComponents: main contrib non-free non-free-firmware\n' \
+    > /etc/apt/sources.list.d/debian.sources \
+    && apt-get update \
+    && apt-get install -y \
+        gcc \
+        default-libmysqlclient-dev \
+        pkg-config \
+        curl \
+        netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# 多阶段缓存优化：先安装依赖
+COPY uv.lock pyproject.toml ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-install-project
+
+# 复制项目代码并完成安装
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked
+
+# 设置虚拟环境路径
+ENV PATH="/app/.venv/bin:$PATH"
+
+# 复制并设置启动脚本权限
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# 暴露端口
+EXPOSE 8000
+
+# 使用启动脚本
+CMD ["/start.sh"]

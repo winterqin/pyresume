@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
-
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -19,7 +19,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$+yp=cf%l*bl^up0$cm8w^-veen3!9%jj#4=enxjeqalj9_)x5'
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY","winterkeyfdsagds15a6g15dsa4g5sda")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -125,29 +125,23 @@ WSGI_APPLICATION = 'configs.wsgi.application'
 
 # Email Configuration
 # 邮件后端，默认用 SMTP
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 
 # SMTP 服务器地址（不同邮箱服务商不一样）
-EMAIL_HOST = 'smtp.gmail.com'  # Gmail 示例
-# EMAIL_HOST = 'smtp.qq.com'      # QQ 邮箱
-# EMAIL_HOST = 'smtp.163.com'     # 163 邮箱
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 
 # 端口（通常 TLS=587, SSL=465）
-EMAIL_PORT = 587
-
-# 是否使用 TLS（推荐）
-EMAIL_USE_TLS = True
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 
 # 是否使用 SSL（如果用 465 端口）
-# EMAIL_USE_SSL = True
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False').lower() == 'true'
 
 # 邮箱账号和密码（注意：有些服务商不是用登录密码，而是 "授权码"）
-EMAIL_HOST_USER = 'your_email@example.com'
-EMAIL_HOST_PASSWORD = 'your_smtp_password_or_app_auth_code'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
 # 默认发件人
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -159,16 +153,17 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 #     }
 # }
 
+# 数据库配置 - 支持Docker环境
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',  # 使用mysql
-        'NAME': 'winter_db',  # 数据库名
-        'USER': 'winter',  # 用户名
-        'PASSWORD': 'qwt123456',  # 密码
-        'HOST': 'winnas',  # 数据库主机，远程服务器可改为IP
-        'PORT': '3306',  # MySQL默认端口
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv('DB_NAME', 'pyresume_db'),
+        'USER': os.getenv('DB_USER', 'pyresume'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'pyresume123456'),
+        'HOST': os.getenv('DB_HOST', 'db'),  # Docker服务名
+        'PORT': os.getenv('DB_PORT', '3306'),
         'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  # 推荐
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
         }
     }
 }
@@ -205,17 +200,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# CORS设置
+# CORS配置 - 添加Docker环境
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "http://localhost:3000",  # Docker前端服务
+    "http://frontend:80",     # Docker内部通信
 ]
 
 CORS_ALLOW_CREDENTIALS = True
