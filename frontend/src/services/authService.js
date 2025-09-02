@@ -52,7 +52,8 @@ const authService = {
       console.log('保存tokens到localStorage...');
       tokenService.setTokens({
         access: response.data.tokens.access,
-        refresh: response.data.tokens.refresh
+        refresh: response.data.tokens.refresh,
+        user_email: response.data.user.email
       });
       console.log('Tokens已保存，accessToken:', tokenService.getAccessToken());
     }
@@ -73,7 +74,8 @@ const authService = {
       console.log('保存tokens到localStorage...');
       tokenService.setTokens({
         access: response.data.tokens.access,
-        refresh: response.data.tokens.refresh
+        refresh: response.data.tokens.refresh,
+        user_email: response.data.user.email
       });
       console.log('Tokens已保存，accessToken:', tokenService.getAccessToken());
     }

@@ -29,7 +29,7 @@ class myUser(AbstractBaseUser, PermissionsMixin):
 
     verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)   # ✅ 新增：给后台/权限使用
+    is_staff = models.BooleanField(default=False)  # ✅ 新增：给后台/权限使用
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
 
@@ -40,6 +40,7 @@ class myUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
 
 class UserToken(models.Model):
     token_id = models.AutoField(primary_key=True)
