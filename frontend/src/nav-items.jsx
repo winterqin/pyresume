@@ -1,28 +1,24 @@
-import { HomeIcon, LogInIcon, UserPlusIcon } from "lucide-react";
-import Index from "./pages/Index.jsx";
-import LoginPage from "./pages/LoginPage.jsx";
-import RegisterPage from "./pages/RegisterPage.jsx";
+import { Home, Briefcase, Building, User } from 'lucide-react';
 
-/**
-* Central place for defining the navigation items. Used for navigation components and routing.
-*/
 export const navItems = [
   {
-    title: "首页",
-    to: "/",
-    icon: <HomeIcon className="h-4 w-4" />,
-    page: <Index />,
+    label: '仪表盘',
+    href: '/',
+    icon: <Home className="h-5 w-5" />,
   },
   {
-    title: "登录",
-    to: "/login",
-    icon: <LogInIcon className="h-4 w-4" />,
-    page: <LoginPage />,
+    label: '求职管理',
+    href: '/applications',
+    icon: <Briefcase className="h-5 w-5" />,
   },
   {
-    title: "注册",
-    to: "/register",
-    icon: <UserPlusIcon className="h-4 w-4" />,
-    page: <RegisterPage />,
+    label: '公司管理',
+    href: '/companies',
+    icon: <Building className="h-5 w-5" />,
+  },
+  {
+    label: '个人信息',
+    href: '/selfinfo',
+    icon: <User className="h-5 w-5" />,
   },
 ];

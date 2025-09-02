@@ -24,8 +24,14 @@ SECRET_KEY = 'django-insecure-$+yp=cf%l*bl^up0$cm8w^-veen3!9%jj#4=enxjeqalj9_)x5
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
 
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:8080",
+#     "http://26.180.68.63:8080",
+#     "http://169.254.83.107:8080",
+#     "http://172.29.32.1:8080",
+#     "http://192.168.6.235:8080",
+# ]
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,8 +44,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # rest framework
     'rest_framework',
+    # cors headers
+    'corsheaders',
     # user apps
-    "user",
+    "user", "pyresume"
 ]
 
 AUTH_USER_MODEL = 'user.myUser'
@@ -47,7 +55,7 @@ AUTH_USER_MODEL = 'user.myUser'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
 }
 
 SIMPLE_JWT = {
@@ -61,6 +69,7 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -68,6 +77,31 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ALLOWED_HOSTS = ["*"]
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 ROOT_URLCONF = 'configs.urls'
@@ -95,7 +129,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 # SMTP 服务器地址（不同邮箱服务商不一样）
-EMAIL_HOST = 'smtp.gmail.com'     # Gmail 示例
+EMAIL_HOST = 'smtp.gmail.com'  # Gmail 示例
 # EMAIL_HOST = 'smtp.qq.com'      # QQ 邮箱
 # EMAIL_HOST = 'smtp.163.com'     # 163 邮箱
 
@@ -115,14 +149,27 @@ EMAIL_HOST_PASSWORD = 'your_smtp_password_or_app_auth_code'
 # 默认发件人
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',  # 使用mysql
+        'NAME': 'winter_db',  # 数据库名
+        'USER': 'winter',  # 用户名
+        'PASSWORD': 'qwt123456',  # 密码
+        'HOST': 'winnas',  # 数据库主机，远程服务器可改为IP
+        'PORT': '3306',  # MySQL默认端口
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"  # 推荐
+        }
     }
 }
 
@@ -164,3 +211,32 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# CORS设置
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]

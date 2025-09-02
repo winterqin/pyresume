@@ -19,7 +19,7 @@ def send_email(token: UserToken):
         bool: 邮件是否成功发送
     """
     subject = f'Your {token.token_type} code'
-    message = f'Your code is {token}, valid for 10 minutes.'
+    message = f'Your code is {token.token}, valid for 10 minutes.'  # ✅ 修正
     from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
     recipient_list = [token.email]
 
@@ -56,7 +56,7 @@ def generate_verification_token(email, token_type='email_verification'):
     user_token = UserToken.objects.create(
         email=email,
         token=token,
-        type=token_type,
+        token_type=token_type,
         expires_at=expires_at
     )
     return user_token
@@ -64,7 +64,7 @@ def generate_verification_token(email, token_type='email_verification'):
 
 def verify_token(email, token, token_type='email_verification'):
     try:
-        user_token = UserToken.objects.get(email=email, token=token, type=token_type)
+        user_token = UserToken.objects.get(email=email, token=token, token_type=token_type)
         if user_token.is_expired():
             return False
         return True

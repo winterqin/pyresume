@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 
 
@@ -21,15 +21,17 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class myUser(AbstractBaseUser):
-    user_id = models.AutoField(primary_key=True)
+class myUser(AbstractBaseUser, PermissionsMixin):
+    id = models.AutoField(primary_key=True)
     email = models.EmailField(unique=True)
-    password = models.CharField(max_length=255)
+
+    # 移除这行：password = models.CharField(max_length=255)  # AbstractBaseUser 已自带
+
     verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)   # ✅ 新增：给后台/权限使用
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now=True)
-    is_superuser = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -38,7 +40,6 @@ class myUser(AbstractBaseUser):
 
     def __str__(self):
         return self.email
-
 
 class UserToken(models.Model):
     token_id = models.AutoField(primary_key=True)
